@@ -35,11 +35,12 @@ jobs:
 
       - name: Validate Kubernetes manifests (offline)
         run: |
-          export KUBECONFIG=/dev/null
-          kubectl apply \
-            --dry-run=client \
-            --validate=false \
-            -f k8s/
+          # Install kubeconform for offline validation
+          curl -L https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+          
+          # Validate all manifests
+          kubeconform -summary k8s/
 
   minikube-smoke-test:
     name: Minikube Smoke Test (Ephemeral)
@@ -65,12 +66,9 @@ jobs:
           minikube start --driver=docker
           minikube status
 
-      - name: Use Minikube Docker daemon
-        run: |
-          eval $(minikube docker-env)
-
       - name: Build image inside Minikube
         run: |
+          eval $(minikube docker-env)
           docker build \
             -t $IMAGE_NAME:test \
             .
