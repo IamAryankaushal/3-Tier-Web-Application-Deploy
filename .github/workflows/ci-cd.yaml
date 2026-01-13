@@ -26,7 +26,7 @@ jobs:
         run: |
           docker build \
             -t $IMAGE_NAME:$IMAGE_TAG \
-            ./docker/wordpress
+            .
 
       #  Kubernetes YAML validation WITHOUT cluster
       - name: Validate Kubernetes manifests (client-side)
