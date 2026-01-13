@@ -1,0 +1,50 @@
+name: CI + Continuous Delivery Pipeline (Kubernetes)
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: custom-wordpress
+
+jobs:
+  build-and-prepare:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Set up Docker
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      # 3️⃣ Generate image tag from commit SHA
+      - name: Set image tag
+        id: vars
+        run: |
+          echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      # 4️⃣ Build Docker image (CI validation)
+      - name: Build Docker image
+        run: |
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
+
+      # 5️⃣ Update Kubernetes manifest with new image tag
+      - name: Update Kubernetes Deployment image
+        run: |
+          sed -i "s|image: .*|image: $IMAGE_NAME:$IMAGE_TAG|g" k8s/wordpress/deployment.yaml
+
+      # 6️⃣ Install kubectl
+      - name: Install kubectl
+        run: |
+          curl -LO https://dl.k8s.io/release/v1.29.0/bin/linux/amd64/kubectl
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+
+      # 7️⃣ Validate Kubernetes manifests (dry run)
+      - name: Validate Kubernetes manifests
+        run: |
+          kubectl apply --dry-run=client -f k8s/
