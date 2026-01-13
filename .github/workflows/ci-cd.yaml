@@ -22,20 +22,23 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.0
+
       - name: Build WordPress Docker image
         run: |
           docker build \
             -t $IMAGE_NAME:$IMAGE_TAG \
             .
 
-      #  Kubernetes YAML validation WITHOUT cluster
-      - name: Validate Kubernetes manifests (client-side)
+      - name: Validate Kubernetes manifests (offline)
         run: |
           kubectl apply \
             --dry-run=client \
             --validate=false \
-            -f k8s/ 
-            
+            -f k8s/
 
   minikube-smoke-test:
     name: Minikube Smoke Test (Ephemeral)
@@ -69,7 +72,7 @@ jobs:
         run: |
           docker build \
             -t $IMAGE_NAME:test \
-            ./docker/wordpress
+            .
 
       - name: Deploy Kubernetes manifests
         run: |
