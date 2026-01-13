@@ -35,6 +35,7 @@ jobs:
 
       - name: Validate Kubernetes manifests (offline)
         run: |
+          export KUBECONFIG=/dev/null
           kubectl apply \
             --dry-run=client \
             --validate=false \
