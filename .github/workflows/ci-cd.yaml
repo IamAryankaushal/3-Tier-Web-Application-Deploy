@@ -33,8 +33,9 @@ jobs:
         run: |
           kubectl apply \
             --dry-run=client \
-            -f k8s/ \
-            --validate=false
+            --validate=false \
+            -f k8s/ 
+            
 
   minikube-smoke-test:
     name: Minikube Smoke Test (Ephemeral)
