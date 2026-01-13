@@ -8,7 +8,7 @@ on:
 
 env:
   IMAGE_NAME: custom-wordpress
-  IMAGE_TAG: ${{ github.sha }}
+  IMAGE_TAG: test
 
 jobs:
   build-and-validate:
@@ -63,15 +63,23 @@ jobs:
 
       - name: Start Minikube
         run: |
-          minikube start --driver=docker
+          minikube start --driver=docker --wait=all
           minikube status
 
       - name: Build image inside Minikube
         run: |
-          eval $(minikube docker-env)
-          docker build \
-            -t $IMAGE_NAME:test \
-            .
+          # Point shell to minikube's docker daemon and build
+          eval $(minikube -p minikube docker-env)
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
+          # Verify image was built
+          docker images | grep $IMAGE_NAME
+
+      - name: Update manifests to use local image
+        run: |
+          # Update WordPress deployment to use imagePullPolicy: Never
+          sed -i 's|imagePullPolicy:.*|imagePullPolicy: Never|g' k8s/wordpress/deployment.yaml
+          # Ensure image name matches
+          sed -i "s|image:.*custom-wordpress.*|image: $IMAGE_NAME:$IMAGE_TAG|g" k8s/wordpress/deployment.yaml
 
       - name: Deploy Kubernetes manifests
         run: |
@@ -83,10 +91,20 @@ jobs:
           kubectl apply -f k8s/wordpress/deployment.yaml
           kubectl apply -f k8s/wordpress/service.yaml
 
+      - name: Wait for MySQL to be ready
+        run: |
+          kubectl wait --for=condition=ready pod -l app=mysql -n wordpress --timeout=180s
+
       - name: Wait for WordPress deployment
         run: |
-          kubectl rollout status deployment/wordpress -n wordpress --timeout=180s
+          kubectl rollout status deployment/wordpress -n wordpress --timeout=300s
 
       - name: Get pod status (debug)
         run: |
           kubectl get pods -n wordpress -o wide
+          kubectl describe pods -n wordpress
+
+      - name: Check WordPress pod logs (if failed)
+        if: failure()
+        run: |
+          kubectl logs -l app=wordpress -n wordpress --tail=50 || true
