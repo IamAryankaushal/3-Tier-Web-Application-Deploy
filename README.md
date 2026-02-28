@@ -1,4 +1,4 @@
-# 🚀 DevOps Automation of a 3-Tier WordPress Application (Local Kubernetes)
+# 🚀 DevOps Automation of a 3-Tier WordPress Application (Local)
 
 ## 📌 Project Objective
 
@@ -333,4 +333,5 @@ Alerts triggered if thresholds exceeded
 
 - Cloud deployment
 - Infrastructure provisioning
+
 
