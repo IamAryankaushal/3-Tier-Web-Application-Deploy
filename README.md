@@ -329,9 +329,8 @@ Alerts triggered if thresholds exceeded
 
 ---
 
-# 🚫 Out of Scope
+# Future Scope
 
 - Cloud deployment
 - Infrastructure provisioning
-- External alert integrations
-- WordPress plugin development
+
